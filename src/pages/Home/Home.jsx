@@ -25,9 +25,7 @@ function Home() {
                   {/* row 1 */}
                   <tr>
                     <th>1</th>
-                    <Link className="hover:underline" to="/pay-balances">
-                      <td>Nathan Co</td>
-                    </Link>
+                    <td><Link className="hover:underline" to="/pay-balances">Nathan Co</Link></td>
                     <td>$256,142.00</td>
                   </tr>
                   {/* row 2 */}

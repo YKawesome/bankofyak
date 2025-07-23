@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import Favicon from "../../../public/favicon.png";
+import Teehee from "../../assets/teehee.png";
 
 function Navbar() {
   return (
@@ -8,13 +8,13 @@ function Navbar() {
         <Link to="/" className="btn btn-ghost text-xl">
           <img
             className="inline-block h-8 w-8 mr-1"
-            src={Favicon}
+            src={Teehee}
             alt="Bank of YAK Logo"
           />{" "}
           Bank of YAK{" "}
           <img
             className="inline-block h-8 w-8 ml-1"
-            src={Favicon}
+            src={Teehee}
             alt="Bank of YAK Logo"
           />
         </Link>
