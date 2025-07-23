@@ -6,7 +6,6 @@ function PayBalances() {
   const { name } = useParams();
   const [transactions, setTransactions] = useState([]);
   const [totalBalance, setTotalBalance] = useState(0);
-  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [message, setMessage] = useState(null);
   const [viewingAll, setViewingAll] = useState(false);
@@ -198,7 +197,10 @@ function PayBalances() {
                 {!viewingAll && (
                   <button
                     className="btn btn-primary"
-                    onClick={() => setShowPaymentOptions(true)}
+                    onClick={() => {
+                      setSelectedMethod("Direct"); // Default method
+                      document.getElementById("payment_modal").showModal();
+                    }}
                     disabled={transactions.length === 0}
                   >
                     Pay
@@ -215,8 +217,7 @@ function PayBalances() {
         <div className="modal-box">
           <h3 className="font-bold text-lg">Payment Confirmation</h3>
           <p className="py-4">
-            I certify that I have sent Yousef ${totalBalance.toFixed(2)} via{" "}
-            {selectedMethod}.
+            I certify that I have sent Yousef ${totalBalance.toFixed(2)}.
           </p>
           <div className="modal-action">
             <button
