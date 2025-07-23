@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@plugin 'daisyui' {
+  themes: caramellatte --default;
+}
+
+:root {
+  background-color: var(--color-base-200)
+}
