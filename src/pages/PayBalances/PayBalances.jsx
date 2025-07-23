@@ -1,25 +1,158 @@
-import { useState } from "react";
-
-// Testing Nathan as the Dummy User
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { supabase } from "../../supabase/client";
 
 function PayBalances() {
-  const transactions = [
-    { id: 1, description: "Dinner at Yakitori", amount: 25.48 },
-    { id: 2, description: "Shared Sashimi Bowl", amount: 13.50 },
-    { id: 3, description: "Drinks at Bar", amount: 10.00 },
-  ];
-
-  const totalBalance = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+  const { name } = useParams();
+  const [transactions, setTransactions] = useState([]);
+  const [totalBalance, setTotalBalance] = useState(0);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [message, setMessage] = useState(null);
+  const [viewingAll, setViewingAll] = useState(false);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const { data: patron, error: patronError } = await supabase
+          .from("patrons")
+          .select("id")
+          .eq("name", name)
+          .single();
+
+        if (patronError || !patron) {
+          setMessage("Patron not found.");
+          return;
+        }
+
+        const { data: transactions, error: transactionsError } = await supabase
+          .from("bills")
+          .select("id, description, value")
+          .eq("patron_id", patron.id)
+          .eq("paid", false);
+
+        if (transactionsError) {
+          setMessage("Failed to fetch transactions.");
+        } else {
+          setTransactions(transactions);
+          const total = transactions.reduce((sum, transaction) => sum + transaction.value, 0);
+          setTotalBalance(total);
+        }
+      } catch (error) {
+        setMessage("An unexpected error occurred.");
+      }
+    };
+
+    fetchTransactions();
+  }, [name]);
+
+  const openModal = (method) => {
+    setSelectedMethod(method);
+    document.getElementById("payment_modal").showModal();
+  };
+
+  const confirmPayment = async () => {
+    try {
+      const { data: patron, error: patronError } = await supabase
+        .from("patrons")
+        .select("id")
+        .eq("name", name)
+        .single();
+
+      if (patronError || !patron) {
+        setMessage("Patron not found.");
+        return;
+      }
+
+      const { error: updateError } = await supabase
+        .from("bills")
+        .update({ paid: true, paid_at: new Date().toISOString() })
+        .eq("patron_id", patron.id);
+
+      if (updateError) {
+        setMessage("Failed to update transactions.");
+      } else {
+        setMessage("Payment confirmed successfully!");
+        setTransactions([]);
+        setTotalBalance(0);
+        document.getElementById("payment_modal").close();
+      }
+    } catch (error) {
+      setMessage("An unexpected error occurred.");
+    }
+  };
+
+  const fetchAllTransactions = async () => {
+    try {
+      const { data: patron, error: patronError } = await supabase
+        .from("patrons")
+        .select("id")
+        .eq("name", name)
+        .single();
+
+      if (patronError || !patron) {
+        setMessage("Patron not found.");
+        return;
+      }
+
+      const { data: transactions, error: transactionsError } = await supabase
+        .from("bills")
+        .select("id, description, value, paid")
+        .eq("patron_id", patron.id);
+
+      if (transactionsError) {
+        setMessage("Failed to fetch transactions.");
+      } else {
+        setTransactions(transactions);
+        const total = transactions.reduce((sum, transaction) => sum + transaction.value, 0);
+        setTotalBalance(total);
+        setViewingAll(true);
+      }
+    } catch (error) {
+      setMessage("An unexpected error occurred.");
+    }
+  };
+
+  const fetchUnpaidTransactions = async () => {
+    try {
+      const { data: patron, error: patronError } = await supabase
+        .from("patrons")
+        .select("id")
+        .eq("name", name)
+        .single();
+
+      if (patronError || !patron) {
+        setMessage("Patron not found.");
+        return;
+      }
+
+      const { data: transactions, error: transactionsError } = await supabase
+        .from("bills")
+        .select("id, description, value")
+        .eq("patron_id", patron.id)
+        .eq("paid", false);
+
+      if (transactionsError) {
+        setMessage("Failed to fetch transactions.");
+      } else {
+        setTransactions(transactions);
+        const total = transactions.reduce((sum, transaction) => sum + transaction.value, 0);
+        setTotalBalance(total);
+        setViewingAll(false);
+      }
+    } catch (error) {
+      setMessage("An unexpected error occurred.");
+    }
+  };
 
   return (
     <div>
       <div className="hero bg-base-200 h-[94vh]">
         <div className="hero-content text-center">
-          <div className="max-w-lg bg-base-100 p-6 shadow-md rounded-box w-lg">
-            <h2 className="text-3xl font-bold">Nathan's Balance</h2>
+          <div className="max-w-lg bg-base-100 p-6 shadow-md rounded-box sm:w-lg w-xs">
+            <h2 className="text-3xl font-bold">{name}'s Balance</h2>
             <div className="overflow-x-auto bg-base-100 shadow-md rounded-box p-5 mt-4">
-              <table className="table table-md table-zebra">
+              <table className="table sm:table-md table-sm table-zebra">
                 <thead>
                   <tr>
                     <th>#</th>
@@ -28,13 +161,24 @@ function PayBalances() {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((transaction) => (
-                    <tr key={transaction.id}>
-                      <th>{transaction.id}</th>
-                      <td>{transaction.description}</td>
-                      <td>${transaction.amount.toFixed(2)}</td>
+                  {transactions.length > 0 ? (
+                    transactions.map((transaction, index) => (
+                      <tr
+                        key={transaction.id}
+                        className={viewingAll && transaction.paid ? "line-through" : ""}
+                      >
+                        <th>{index + 1}</th>
+                        <td>{transaction.description}</td>
+                        <td>${transaction.value.toFixed(2)}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" className="text-center">
+                        {viewingAll ? "No transaction history." : message || "No unpaid transactions."}
+                      </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
                 <tfoot>
                   <tr>
@@ -44,24 +188,49 @@ function PayBalances() {
                   </tr>
                 </tfoot>
               </table>
-              {!showPaymentOptions ? (
+              <div className="flex justify-between mt-4">
                 <button
-                  className="btn btn-primary w-full mt-4"
-                  onClick={() => setShowPaymentOptions(true)}
+                  className="btn btn-secondary"
+                  onClick={viewingAll ? fetchUnpaidTransactions : fetchAllTransactions}
                 >
-                  Pay
+                  {viewingAll ? "Back to Unpaid" : "All Transactions"}
                 </button>
-              ) : (
-                <div className="join w-full mt-4 justify-center">
-                  <button className="btn btn-accent w-1/3 join-item">Zelle</button>
-                  <button className="btn btn-secondary w-1/3 join-item">Venmo</button>
-                  <button className="btn btn-accent w-1/3 join-item">Cash</button>
-                </div>
-              )}
+                {!viewingAll && (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setShowPaymentOptions(true)}
+                    disabled={transactions.length === 0}
+                  >
+                    Pay
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal */}
+      <dialog id="payment_modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Payment Confirmation</h3>
+          <p className="py-4">
+            I certify that I have sent Yousef ${totalBalance.toFixed(2)} via{" "}
+            {selectedMethod}.
+          </p>
+          <div className="modal-action">
+            <button
+              className="btn"
+              onClick={() => document.getElementById("payment_modal").close()}
+            >
+              Go Back
+            </button>
+            <button className="btn btn-primary" onClick={confirmPayment}>
+              Confirm
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }
