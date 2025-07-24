@@ -6,6 +6,7 @@ function Home() {
   const [patrons, setPatrons] = useState([]);
   const [message, setMessage] = useState(null);
   const [newPatronName, setNewPatronName] = useState("");
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const fetchPatronsWithBalances = async () => {
@@ -57,9 +58,17 @@ function Home() {
     }
   };
 
+  const sortedPatrons = [...patrons].sort((a, b) => {
+    if (a.balance !== 0 && b.balance === 0) return -1;
+    if (a.balance === 0 && b.balance !== 0) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const filteredPatrons = showAll ? sortedPatrons : sortedPatrons.filter((patron) => patron.balance !== 0);
+
   return (
     <div>
-      <div className="hero bg-base-200 h-[94vh]">
+      <div className="hero bg-base-200 h-[94vh] min-h-fit">
         <div className="hero-content text-center">
           <div className="max-w-lg flex flex-col gap-5">
             <h1 className="text-4xl font-bold">Account Balances</h1>
@@ -67,7 +76,7 @@ function Home() {
               Welcome to the Bank of YAK! <br />
               Thank you for your patronage. Now pay me back.
             </p>
-            <div className="overflow-x-auto bg-base-100 shadow-md rounded-box p-5">
+            <div className="overflow-x-auto bg-base-100 shadow-md rounded-box px-5 py-2">
               <table className="table table-lg table-zebra">
                 {/* head */}
                 <thead>
@@ -78,8 +87,8 @@ function Home() {
                   </tr>
                 </thead>
                 <tbody>
-                  {patrons.length > 0 ? (
-                    patrons.map((patron, index) => (
+                  {filteredPatrons.length > 0 ? (
+                    filteredPatrons.map((patron, index) => (
                       <tr key={patron.id}>
                         <th>{index + 1}</th>
                         <td>
@@ -90,7 +99,9 @@ function Home() {
                             {patron.name}
                           </Link>
                         </td>
-                        <td>${patron.balance.toFixed(2)}</td>
+                        <td className={patron.balance !== 0 ? "text-error" : ""}>
+                          ${patron.balance.toFixed(2)}
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -101,6 +112,18 @@ function Home() {
                     </tr>
                   )}
                 </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan="3" className="text-center">
+                      <button
+                        className="btn btn-outline w-full"
+                        onClick={() => setShowAll(!showAll)}
+                      >
+                        {showAll ? "Hide Zero Balances" : "Show All"}
+                      </button>
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
             <div className="flex flex-col">

@@ -55,7 +55,7 @@ function AddBill() {
 
   return (
     <div>
-      <div className="hero bg-base-200 h-[94vh]">
+      <div className="hero bg-base-200 h-[94vh] min-h-fit">
         <div className="hero-content text-center">
           <div className="max-w-lg bg-base-100 p-6 shadow-md rounded-box lg:w-lg md:w-md w-xs">
             {renderContent()}

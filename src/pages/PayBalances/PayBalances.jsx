@@ -9,6 +9,7 @@ function PayBalances() {
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [message, setMessage] = useState(null);
   const [viewingAll, setViewingAll] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -146,7 +147,7 @@ function PayBalances() {
 
   return (
     <div>
-      <div className="hero bg-base-200 h-[94vh]">
+      <div className="hero bg-base-200 h-[94vh] min-h-fit">
         <div className="hero-content text-center">
           <div className="max-w-lg bg-base-100 p-6 shadow-md rounded-box sm:w-lg w-xs">
             <h2 className="text-3xl font-bold">{name}'s Balance</h2>
@@ -168,7 +169,16 @@ function PayBalances() {
                       >
                         <th>{index + 1}</th>
                         <td>{transaction.description}</td>
-                        <td>${transaction.value.toFixed(2)}</td>
+                        <td
+                          className={`hover:line-through ${!viewingAll ? 'cursor-pointer' : ''}`}
+                          onClick={() => {
+                            if (viewingAll) return; // Disable clickability on the 'All Transactions' screen
+                            setSelectedTransaction(transaction);
+                            document.getElementById("confirm_payment_modal").showModal();
+                          }}
+                        >
+                          ${transaction.value.toFixed(2)}
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -227,6 +237,47 @@ function PayBalances() {
               Go Back
             </button>
             <button className="btn btn-primary" onClick={confirmPayment}>
+              Confirm
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      {/* Confirmation Modal for Individual Transaction Payment */}
+      <dialog id="confirm_payment_modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Confirm Payment</h3>
+          <p className="py-4">
+            By confirming, you certify that you have already paid this transaction or are Yousef. Misuse of this feature may result in termination of service at the Bank of YAK.
+          </p>
+          <div className="modal-action">
+            <button
+              className="btn"
+              onClick={() => document.getElementById("confirm_payment_modal").close()}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                try {
+                  const { error } = await supabase
+                    .from("bills")
+                    .update({ paid: true, paid_at: new Date().toISOString() })
+                    .eq("id", selectedTransaction.id);
+
+                  if (error) {
+                    setMessage("Failed to mark transaction as paid.");
+                  } else {
+                    setTransactions(transactions.filter((t) => t.id !== selectedTransaction.id));
+                    setTotalBalance(totalBalance - selectedTransaction.value);
+                    document.getElementById("confirm_payment_modal").close();
+                  }
+                } catch (error) {
+                  setMessage("An unexpected error occurred.");
+                }
+              }}
+            >
               Confirm
             </button>
           </div>

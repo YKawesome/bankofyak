@@ -4,7 +4,7 @@ import Teehee from "../../assets/teehee.png";
 function Navbar() {
   return (
     <div>
-      <div className="navbar bg-secondary text-secondary-content shadow-sm justify-center">
+      <div className="navbar bg-secondary text-secondary-content shadow-sm justify-center h-[4.5rem]">
         <Link to="/" className="btn btn-ghost text-xl">
           <img
             className="inline-block h-8 w-8 mr-1"
