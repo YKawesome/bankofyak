@@ -107,7 +107,7 @@ function Home() {
                   ) : (
                     <tr>
                       <td colSpan="3" className="text-center">
-                        {message || "Loading..."}
+                        {message || (patrons.length > 0 ? "Squared up!" : "Loading...")}
                       </td>
                     </tr>
                   )}
