@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../supabase/client";
 
 function Home() {
@@ -7,6 +7,9 @@ function Home() {
   const [message, setMessage] = useState(null);
   const [newPatronName, setNewPatronName] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editingName, setEditingName] = useState("");
+  const editInputRef = useRef(null);
 
   useEffect(() => {
     const fetchPatronsWithBalances = async () => {
@@ -27,6 +30,13 @@ function Home() {
 
     fetchPatronsWithBalances();
   }, []);
+
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingId]);
 
   const addPatron = async () => {
     if (!newPatronName.trim()) {
@@ -54,6 +64,55 @@ function Home() {
       }
     } catch (error) {
       console.error("Unexpected error while adding patron:", error);
+      setMessage("An unexpected error occurred.");
+    }
+  };
+
+  const startRename = (patron) => {
+    setEditingId(patron.id);
+    setEditingName(patron.name);
+  };
+
+  const cancelRename = () => {
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  const submitRename = async () => {
+    const newName = editingName.trim();
+    if (!newName) {
+      setMessage("Name cannot be empty.");
+      return;
+    }
+
+    const current = patrons.find((p) => p.id === editingId);
+    if (!current) {
+      cancelRename();
+      return;
+    }
+    if (current.name === newName) {
+      cancelRename();
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("patrons")
+        .update({ name: newName })
+        .eq("id", editingId);
+
+      if (error) {
+        console.error("Error renaming patron:", error);
+        setMessage("Failed to rename patron.");
+      } else {
+        setPatrons((prev) =>
+          prev.map((p) => (p.id === editingId ? { ...p, name: newName } : p))
+        );
+        setMessage("Patron renamed.");
+        cancelRename();
+      }
+    } catch (err) {
+      console.error("Unexpected error while renaming patron:", err);
       setMessage("An unexpected error occurred.");
     }
   };
@@ -91,13 +150,35 @@ function Home() {
                     filteredPatrons.map((patron, index) => (
                       <tr key={patron.id}>
                         <th>{index + 1}</th>
-                        <td>
-                          <Link
-                            className="hover:underline"
-                            to={`/pay-balances/${patron.name}`}
-                          >
-                            {patron.name}
-                          </Link>
+                        <td
+                          className="text-left"
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            startRename(patron);
+                          }}
+                        >
+                          {editingId === patron.id ? (
+                            <input
+                              ref={editInputRef}
+                              className="input input-bordered input-lg w-auto max-w-[8rem] align-middle text-left"
+                              placeholder={patron.name}
+                              value={editingName}
+                              size={Math.max(((editingName || patron.name) ?? "").length + 1, 4)}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") submitRename();
+                                if (e.key === "Escape") cancelRename();
+                              }}
+                              onBlur={cancelRename}
+                            />
+                          ) : (
+                            <Link
+                              className="hover:underline"
+                              to={`/pay-balances/${patron.name}`}
+                            >
+                              {patron.name}
+                            </Link>
+                          )}
                         </td>
                         <td className={patron.balance !== 0 ? "text-error" : ""}>
                           ${patron.balance.toFixed(2)}
