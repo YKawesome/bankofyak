@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../supabase/client";
 
-function Home() {
+function Home({ adminMode = false }) {
   const [patrons, setPatrons] = useState([]);
   const [message, setMessage] = useState(null);
   const [newPatronName, setNewPatronName] = useState("");
@@ -37,6 +37,15 @@ function Home() {
       editInputRef.current.select();
     }
   }, [editingId]);
+
+  useEffect(() => {
+    if (!adminMode) {
+      const modal = document.getElementById("add_patron_modal");
+      if (modal?.open) {
+        modal.close();
+      }
+    }
+  }, [adminMode]);
 
   const addPatron = async () => {
     if (!newPatronName.trim()) {
@@ -207,41 +216,45 @@ function Home() {
                 </tfoot>
               </table>
             </div>
-            <div className="flex flex-col">
-              <Link to="/add-bill">
-                <button className="btn btn-primary w-full">Add Bill</button>
-              </Link>
-              <button
-                className="btn btn-secondary w-full mt-4"
-                onClick={() => document.getElementById("add_patron_modal").showModal()}
-              >
-                Add Patron
-              </button>
-            </div>
-
-            <dialog id="add_patron_modal" className="modal">
-              <div className="modal-box">
-                <h3 className="font-bold text-lg">Add New Patron</h3>
-                <input
-                  type="text"
-                  placeholder="Enter patron name"
-                  className="input input-bordered w-full mt-4"
-                  value={newPatronName}
-                  onChange={(e) => setNewPatronName(e.target.value)}
-                />
-                <div className="modal-action">
+            {adminMode && (
+              <>
+                <div className="flex flex-col">
+                  <Link to="/add-bill">
+                    <button className="btn btn-primary w-full">Add Bill</button>
+                  </Link>
                   <button
-                    className="btn"
-                    onClick={() => document.getElementById("add_patron_modal").close()}
+                    className="btn btn-secondary w-full mt-4"
+                    onClick={() => document.getElementById("add_patron_modal").showModal()}
                   >
-                    Cancel
-                  </button>
-                  <button className="btn btn-primary" onClick={addPatron}>
-                    Add
+                    Add Patron
                   </button>
                 </div>
-              </div>
-            </dialog>
+
+                <dialog id="add_patron_modal" className="modal">
+                  <div className="modal-box">
+                    <h3 className="font-bold text-lg">Add New Patron</h3>
+                    <input
+                      type="text"
+                      placeholder="Enter patron name"
+                      className="input input-bordered w-full mt-4"
+                      value={newPatronName}
+                      onChange={(e) => setNewPatronName(e.target.value)}
+                    />
+                    <div className="modal-action">
+                      <button
+                        className="btn"
+                        onClick={() => document.getElementById("add_patron_modal").close()}
+                      >
+                        Cancel
+                      </button>
+                      <button className="btn btn-primary" onClick={addPatron}>
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </dialog>
+              </>
+            )}
           </div>
         </div>
       </div>
