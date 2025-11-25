@@ -73,8 +73,8 @@ function Splitter({ onBack }) {
   };
 
   const removeName = (name) => {
-    if (name === "Yousef") return; // Always keep Yousef
     setSelectedNames((prev) => prev.filter((n) => n !== name));
+    setPaidNames((prev) => prev.filter((n) => n !== name));
   };
 
   const handleSubmit = async () => {
@@ -199,10 +199,9 @@ function Splitter({ onBack }) {
               <button
                 key={name}
                 type="button"
-                className={`badge badge-outline gap-1 ${name === "Yousef" ? "badge-neutral cursor-not-allowed" : "badge-accent cursor-pointer hover:badge-error"}`}
-                onClick={() => name !== "Yousef" && removeName(name)}
-                title={name === "Yousef" ? "Can't remove Yousef" : `Remove ${name}`}
-                aria-disabled={name === "Yousef"}
+                className="badge badge-accent gap-1 cursor-pointer hover:badge-error"
+                onClick={() => removeName(name)}
+                title={`Remove ${name}`}
               >
                 {name}
               </button>
