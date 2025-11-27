@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import confetti from "canvas-confetti";
 import { supabase } from "../../supabase/client";
 
 function PayBalances() {
@@ -76,6 +77,11 @@ function PayBalances() {
         setTransactions([]);
         setTotalBalance(0);
         document.getElementById("payment_modal").close();
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
       }
     } catch (error) {
       setMessage("An unexpected error occurred.");
@@ -272,6 +278,11 @@ function PayBalances() {
                     setTransactions(transactions.filter((t) => t.id !== selectedTransaction.id));
                     setTotalBalance(totalBalance - selectedTransaction.value);
                     document.getElementById("confirm_payment_modal").close();
+                    confetti({
+                      particleCount: 100,
+                      spread: 70,
+                      origin: { y: 0.6 },
+                    });
                   }
                 } catch (error) {
                   setMessage("An unexpected error occurred.");
